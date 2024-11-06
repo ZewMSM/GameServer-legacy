@@ -222,7 +222,7 @@ class Player(BaseAdapter):
 
         player_island = await PlayerIsland.create_new_island(self.id, 1)
 
-        self.islands.append(player_island)
+        self.islands = [player_island]
         self.active_island = player_island.id
 
     async def check_prices(self, *args, coins: int = None, diamonds: int = None, food: int = None,
