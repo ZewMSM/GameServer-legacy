@@ -13,7 +13,9 @@ async def send_player_data(client: SFSServerClient, request: SFSObject):
             if client.player is None:
                 await asyncio.sleep(1)
             else:
-                return SFSObject().putSFSObject('player_object', await client.player.to_sfs_object())
+                pdata =  SFSObject().putSFSObject('player_object', await client.player.to_sfs_object())
+                print(pdata.tokenize())
+                return pdata
         else:
             return None
     await client.kick()

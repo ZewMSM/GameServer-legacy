@@ -44,7 +44,7 @@ class Updater:
 
         async with aiohttp.ClientSession() as session:
             async with session.post('https://auth.bbbgame.net/auth/api/token', data={
-                "g": 1,
+                "g": 27,
                 "u": self.username,
                 "p": self.password,
                 "t": self.login_type,
@@ -57,12 +57,17 @@ class Updater:
                 self.access_token = auth_response.get("access_token")
                 self.user_game_id = auth_response.get("user_game_id")[0]
 
-            async with session.post('https://msm-auth.bbbgame.net/pregame_setup.php', headers={"Authorization": self.access_token}, data={
+            async with session.post('https://msmpc.bbbgame.net/pregame_setup.php', headers={"Authorization": self.access_token}, data={
                 'client_version': self.client_version,
                 'access_key': self.access_key,
-                "device_model": "iPhone 13 Pro",
-                "device_vendor": "Apple",
-                "platform": 'ios',
+                "device_model": "PCDevice",
+                "device_vendor": "wintel",
+                "device_id": "d0f6b5ed-0bb8-486d-b2dc-2c92fc3cba7d",
+                "platform": 'pc',
+                "os_version": "10",
+                "auth_version": "2.0.0",
+                "g": "27",
+                "tcs": "1"
             }) as resp:
                 pregame_response = json.loads(await resp.text())
                 if not pregame_response.get("ok"):
@@ -302,7 +307,8 @@ class DatabaseUpdater(Updater):
             await obj.update_if_exists()
 
     async def test(self):
-        response = await self.sfs_client.request('gs_move_structure', SFSObject().putLong('user_structure_id', 3).putInt('pos_x', 200).putInt('pos_y', 50))
+        response = await self.sfs_client.request('gs_player', SFSObject().putLong('user_structure_id', 3).putInt('pos_x', 200).putInt('pos_y', 50))
+        print(response.tokenize())
         await self.sfs_client.read_response()
         await self.sfs_client.read_response()
         await self.sfs_client.read_response()
@@ -311,10 +317,10 @@ class DatabaseUpdater(Updater):
 async def main():
     await init_database()
     updater = DatabaseUpdater()
-    await updater.init('jp34cx4h8w2p', 'nvmgj529rzxgnhctvh2t', 'anon', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
-    # await updater.test()
-    await updater.update_monsters()
+    await updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
+    await updater.test()
     return
+    await updater.update_monsters()
     await updater.update_genes()
     await updater.update_levels()
     await updater.update_scratch_offers()

@@ -3,7 +3,7 @@ import logging
 import time
 from typing import List
 
-from ZewSFS.Types import SFSObject, SFSArray, Long, Double
+from ZewSFS.Types import SFSObject, SFSArray, Long, Double, Bool, Int
 from database import PlayerDB, PlayerIslandDB, PlayerStructureDB, PlayerEggDB, PlayerMonsterDB
 from database.base_adapter import BaseAdapter
 from database.island import Island
@@ -17,7 +17,14 @@ logger = logging.getLogger('GameServer/Player')
 class Player(BaseAdapter):
     _db_model = PlayerDB
     _game_id_key = 'bbb_id'
-    _specific_sfs_datatypes = {}
+    _specific_sfs_datatypes = {
+        "friend_gift": Long,
+        "egg_wildcards": Long,
+        "is_admin": Int,
+        "last_login": Long,
+        "active_island": Long,
+        "speed_up_credit": Long
+    }
 
     is_admin: bool = False
     player_groups: List['int'] = [40, 45, 51]
@@ -26,13 +33,13 @@ class Player(BaseAdapter):
     friend_gift: int = 0
     country: str = 'UK'
 
-    diamonds: int = 999_999_999
+    diamonds: int = 1_999_999_999
     coins: int = 1_999_999_999
     diamonds_spent: int = 0
     egg_wildcards: int = 999_999_999
     keys: int = 999_999_999
     food: int = 1_999_999_999
-    level: int = 0
+    level: int = 100
     relics: int = 999_999_999
     xp: int = 0
     starpower: int = 999_999_999
@@ -167,11 +174,20 @@ class Player(BaseAdapter):
         params.putSFSArray('mailbox', SFSArray())
         params.putSFSObject('inventory', SFSObject().putSFSArray('items', SFSArray()))
 
+        params.putLong("monsterScratchTime", self.monster_scratch_time)
+        params.putLong("nextDailyLogin", self.next_daily_login)
+        params.putIntArray("owned_island_themes", [])
+
+        params.putSFSArray("scaled_daily_reward", SFSArray())
+        params.putSFSArray("timed_events", SFSArray())
+        params.putSFSObject("unlocks", SFSObject())
+
         islands = SFSArray()
         for island in self.islands:
             islands.addSFSObject(await island.to_sfs_object())
 
         params.putSFSArray('islands', islands)
+        params.putLong("last_login", round(self.last_login))
 
         return params
 
@@ -400,6 +416,7 @@ class PlayerIsland(BaseAdapter):
         params.putSFSArray("monsters", SFSArray())
         params.putSFSArray("torches", SFSArray())  # TODO: Add torches
         params.putSFSArray("last_baked", SFSArray())
+        params.putSFSArray("tiles", SFSArray())
 
         structures = SFSArray()
         for structure in self.structures:
