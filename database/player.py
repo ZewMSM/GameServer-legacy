@@ -399,7 +399,10 @@ class PlayerIsland(BaseAdapter):
         self.structures = await PlayerStructure.load_all_by(PlayerStructureDB.user_island_id, self.id)
         self.eggs = await PlayerEgg.load_all_by(PlayerEggDB.user_island_id, self.id)
         self.monsters = await PlayerMonster.load_all_by(PlayerMonsterDB.user_island_id, self.id)
+
         self.monsters_sold_ids = json.loads(self.monsters_sold)
+        if type(self.monsters_sold_ids) is str:
+            self.monsters_sold_ids = []
 
     async def update_sfs(self, params: SFSObject):
         params.putLong('user', self.user_id)
