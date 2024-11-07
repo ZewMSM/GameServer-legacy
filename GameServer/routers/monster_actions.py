@@ -157,14 +157,14 @@ async def sell_monster(client: SFSServerClient, params: SFSObject):
         cisland: 'PlayerIsland' = client.player.get_island(user_monster.child_island_id)
         cmonster = cisland.get_monster(user_monster.child_monster_id)
         try:
-            if cmonster.monster_id not in cisland.monsters_sold:
-                cisland.monsters_sold.append(cmonster.monster_id)
+            if cmonster.monster_id not in cisland.monsters_sold_ids:
+                cisland.monsters_sold_ids.append(cmonster.monster_id)
 
             cisland.monsters.remove(cmonster)
             await cmonster.remove()
             await client.send_extension("gs_update_sold_monsters", SFSObject()
                                         .putLong("island_id", cisland.id)
-                                        .putUtfString("monsters_sold", json.dumps(list(cisland.monsters_sold))))
+                                        .putUtfString("monsters_sold", json.dumps(list(cisland.monsters_sold_ids))))
             await client.send_extension("gs_sell_monster", SFSObject()
                                         .putBool('success', True)
                                         .putLong('user_gi_monster_id', user_monster.child_monster_id)
@@ -300,9 +300,9 @@ async def place_on_gold_island(client: SFSServerClient, params: SFSObject):
         parent_monster.child_monster_id = user_monster.id
         parent_monster.child_island_id = active_island.id
 
-        if parent_monster.monster.id not in active_island.monsters_sold:
+        if parent_monster.monster.id not in active_island.monsters_sold_ids:
             async with active_island:
-                active_island.monsters_sold.append(parent_monster.monster.id)
+                active_island.monsters_sold_ids.append(parent_monster.monster.id)
 
     response = SFSObject()
     response.putBool('success', True)

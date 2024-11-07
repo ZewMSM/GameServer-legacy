@@ -371,6 +371,7 @@ class PlayerIsland(BaseAdapter):
     light_torch_flag: bool = False
     warp_speed: float = 1.0
     monsters_sold: str = '[]'
+    monsters_sold_ids: list[int]
     name: str = None
 
     last_changed: int = None
@@ -383,23 +384,22 @@ class PlayerIsland(BaseAdapter):
     async def before_save(self):
         self.last_baked = json.dumps(self.last_baked)
         self.costumes_owned = json.dumps(self.costumes_owned)
-        self.monsters_sold = json.dumps(self.monsters_sold)
+        self.monsters_sold = json.dumps(self.monsters_sold_ids)
 
     async def after_save(self):
         self.last_baked = json.loads(self.last_baked)
         self.costumes_owned = json.loads(self.costumes_owned)
-        self.monsters_sold = json.loads(self.monsters_sold)
 
     async def on_load_complete(self):
         if type(self.last_baked) is str:
             self.last_baked = json.loads(self.last_baked)
             self.costumes_owned = json.loads(self.costumes_owned)
-            self.monsters_sold = json.loads(self.monsters_sold)
 
         self.island = await Island.load_by_id(int(self.island_id))
         self.structures = await PlayerStructure.load_all_by(PlayerStructureDB.user_island_id, self.id)
         self.eggs = await PlayerEgg.load_all_by(PlayerEggDB.user_island_id, self.id)
         self.monsters = await PlayerMonster.load_all_by(PlayerMonsterDB.user_island_id, self.id)
+        self.monsters_sold_ids = json.loads(self.monsters_sold)
 
     async def update_sfs(self, params: SFSObject):
         params.putLong('user', self.user_id)
@@ -407,7 +407,7 @@ class PlayerIsland(BaseAdapter):
         params.putInt('type', self.island.island_type)
         params.putInt('num_torches', 0)  # TODO: Add torches
         params.putUtfString("costumes_owned", json.dumps(self.costumes_owned))
-        params.putUtfString('monsters_sold', json.dumps(list(self.monsters_sold)))
+        params.putUtfString('monsters_sold', json.dumps(list(self.monsters_sold_ids)))
 
         params.putSFSArray("baking", SFSArray())  # TODO: Add baking
         params.putSFSArray("breeding", SFSArray())  # TODO: Add breeding
@@ -440,7 +440,7 @@ class PlayerIsland(BaseAdapter):
         async with PlayerIsland() as self:
             self.island_id = island_id
             self.user_id = user_id
-            self.monsters_sold = []
+            self.monsters_sold_ids = []
         await self.on_load_complete()
         logger.info(f'Created new island(island_id={self.island.id}) for player(bbb_id={self.user_id})')
 
@@ -630,8 +630,8 @@ class PlayerEgg(BaseAdapter):
 
     async def mark_as_viewed(self):
         async with await self.get_island() as island:
-            if self.monster_id not in island.monsters_sold:
-                island.monsters_sold.append(self.monster_id)
+            if self.monster_id not in island.monsters_sold_ids:
+                island.monsters_sold_ids.append(self.monster_id)
 
     @staticmethod
     async def create_new_egg(island_id: int, structure_id: int, monster_id: int, hatch_now):

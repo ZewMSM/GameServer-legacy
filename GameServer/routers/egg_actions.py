@@ -92,9 +92,9 @@ async def hatchEgg(client: SFSServerClient, params: SFSObject):
             return 'You don\'t have enough currency to buy this monster.'
         direct_place = True
 
-        if monster.id not in island.monsters_sold:
+        if monster.id not in island.monsters_sold_ids:
             async with island:
-                island.monsters_sold.append(monster.id)
+                island.monsters_sold_ids.append(monster.id)
     else:
         if user_egg.hatches_on > round(time.time() * 1000):
             return 'This egg is not hatched!'
