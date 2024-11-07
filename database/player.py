@@ -440,6 +440,7 @@ class PlayerIsland(BaseAdapter):
         async with PlayerIsland() as self:
             self.island_id = island_id
             self.user_id = user_id
+            self.monsters_sold = []
         await self.on_load_complete()
         logger.info(f'Created new island(island_id={self.island.id}) for player(bbb_id={self.user_id})')
 
