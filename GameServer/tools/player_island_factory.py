@@ -47,7 +47,7 @@ class PlayerIslandFactory:
 
     @staticmethod
     async def create_initial_structures(player_island: 'PlayerIsland'):
-        if player_island.is_wublin_island() or player_island.is_celestial_island():
+        if player_island.is_wublin_island() or player_island.is_celestial_island() or player_island.is_nexus_island():
             return
         if player_island.is_battle_island():
             player_island.structures.append(await PlayerStructure.create_new_structure(player_island.id, PlayerIslandFactory.BATTLE_HOTEL, *PlayerIslandFactory.BATTLE_HOTEL_POS, completed=True))
