@@ -1,12 +1,14 @@
 import asyncio
 import json
 import logging
+import os
+from asyncio import create_task
 
 import aiohttp
 
 from ZewSFS.Client import SFSClient
 from ZewSFS.Types import SFSObject
-from database import init_database
+from database import init_database, logger
 from database.daily_cumulative_login import DailyCumulativeLogin
 from database.flip_board import FlipBoard, FlipLevel
 from database.gene import Gene, AttunerGene
@@ -314,36 +316,88 @@ class DatabaseUpdater(Updater):
         await self.sfs_client.read_response()
 
 
+class ContentUpdater(Updater):
+    sfs_client: SFSClient
+
+    async def init(self, username: str, password: str, login_type: str, client_version: str, access_key: str):
+        await self._init(username, password, login_type, client_version, access_key)
+
+    @staticmethod
+    def create_path(path):
+        folder_list = path.split('/')
+        current_path = ''
+
+        for ind, folder in enumerate(folder_list):
+            current_path = os.path.join(current_path, folder)
+            if not os.path.exists(current_path) and ind < len(folder_list) - 1:
+                os.mkdir(current_path)
+        return path
+
+    async def get_files(self):
+        result = []
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"{self.content_url}") as resp:
+                # {'localName': 'text/ru.utf8', 'serverName': 'text/ru.utf8', 'checksum': '36115b6d5d548d5bb0acd704cb8990e3', 'link': 'https://dlc2.bbbgame.net/my_singing_monsters/dlc/4.1.2/r39218-PheTmwhc/text/ru.utf8'}
+                for item in json.loads(await resp.text()):
+                    item["link"] = f"{'/'.join(self.content_url.split('/')[:-1])}/{item['serverName']}"
+                    result.append(item)
+                return result
+
+
+    async def download_file(self, path, link):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(link) as resp:
+                with open(path, "wb") as f:
+                    f.write(await resp.read())
+
+    async def download_task(self, file):
+        rev, *filename = file.get('link').split('/r')[1].split('/')
+        filename = "/".join(filename)
+        if not '.' in filename:
+            return
+
+        await self.download_file(self.create_path(f'content/updates/{self.client_version}/r{rev}/{filename}'), file.get('link'))
+        logger.info(f'Downloaded {filename} for {self.client_version}/r{rev}')
+
+    async def download_updates(self):
+        await asyncio.gather(*[asyncio.create_task(self.download_task(file)) for file in await self.get_files()])
+
+
 async def main():
-    await init_database()
-    updater = DatabaseUpdater()
-    await updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
-    await updater.test()
+    content_updater = ContentUpdater()
+    await content_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
+    await content_updater.download_updates()
     return
-    await updater.update_monsters()
-    await updater.update_genes()
-    await updater.update_levels()
-    await updater.update_scratch_offers()
-    await updater.update_structures()
-    await updater.update_islands()
-    await updater.update_island_themes()
-    await updater.update_store()
-    await updater.update_costumes()
-    await updater.update_flip_boards()
-    await updater.update_flip_levels()
-    await updater.update_daily_cumulative_login()
-    await updater.update_flexeggdefs()
-    await updater.update_attuner_genes()
-    await updater.update_loot()
-    await updater.update_nucleus_reward()
-    await updater.update_alt_costs()
-    await updater.update_store_replacements()
-    await updater.update_titan_souls_levels()
-    await updater.update_timed_events()
-    await updater.update_rare_monster_data()
-    await updater.update_epic_monster_data()
-    await updater.update_monster_home_data()
-    await updater.update_cant_breed()
+
+    await init_database()
+    database_updater = DatabaseUpdater()
+    await database_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
+    await database_updater.test()
+    await database_updater.update_monsters()
+    await database_updater.update_genes()
+    await database_updater.update_levels()
+    await database_updater.update_scratch_offers()
+    await database_updater.update_structures()
+    await database_updater.update_islands()
+    await database_updater.update_island_themes()
+    await database_updater.update_store()
+    await database_updater.update_costumes()
+    await database_updater.update_flip_boards()
+    await database_updater.update_flip_levels()
+    await database_updater.update_daily_cumulative_login()
+    await database_updater.update_flexeggdefs()
+    await database_updater.update_attuner_genes()
+    await database_updater.update_loot()
+    await database_updater.update_nucleus_reward()
+    await database_updater.update_alt_costs()
+    await database_updater.update_store_replacements()
+    await database_updater.update_titan_souls_levels()
+    await database_updater.update_timed_events()
+    await database_updater.update_rare_monster_data()
+    await database_updater.update_epic_monster_data()
+    await database_updater.update_monster_home_data()
+    await database_updater.update_cant_breed()
 
 
 if __name__ == '__main__':

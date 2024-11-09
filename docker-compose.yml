@@ -27,6 +27,8 @@ services:
       - "9933:9933"
       - "8082:80"
     restart: unless-stopped
+    volumes:
+      - "/Users/zewsic/projects/ZewMSM/game_content:/app/content"
   redis_game:
     image: redis:latest
     networks:
