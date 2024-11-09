@@ -111,7 +111,7 @@ class GameServer:
             await GameServer.send_banned_message(client, 'INVALID_BBB_ID')
             return False
 
-        if 'game_player' not in decrypted_token.get('rights', []):
+        if 'can_play' not in decrypted_token.get('rights', []):
             bind_link = generate_bind_link(bbb_id)
             await client.send_extension("gs_client_version_error", SFSObject()
                                         .putBool("success", False)
