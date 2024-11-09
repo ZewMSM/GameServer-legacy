@@ -2,10 +2,13 @@ import asyncio
 import json
 import logging
 import os
+import shutil
+import zipfile
 from asyncio import create_task
 
 import aiohttp
 
+from GameServer.tools.MSMLocalization import MSMLocalization
 from ZewSFS.Client import SFSClient
 from ZewSFS.Types import SFSObject
 from database import init_database, logger
@@ -174,6 +177,8 @@ class DatabaseUpdater(Updater):
         async def update_c_task(cls, dat, iid):
             x_obj = await cls.from_sfs_object(dat)
             x_obj.island_id = iid
+            if cls == IslandMonster and x_obj.monster == 815:
+                cls.instrument = '018_SOUL_1.bin'
             await x_obj.update_if_exists()
             await x_obj.save()
 
@@ -318,9 +323,13 @@ class DatabaseUpdater(Updater):
 
 class ContentUpdater(Updater):
     sfs_client: SFSClient
+    localization_patch = None
 
     async def init(self, username: str, password: str, login_type: str, client_version: str, access_key: str):
         await self._init(username, password, login_type, client_version, access_key)
+
+        with open('content/localization_patch.json') as f:
+            self.localization_patch = json.loads(f.read())
 
     @staticmethod
     def create_path(path):
@@ -352,15 +361,59 @@ class ContentUpdater(Updater):
                     f.write(await resp.read())
 
     async def download_task(self, file):
-        rev, *filename = file.get('link').split('/r')[1].split('/')
+        rev, *filename = '/r'.join(file.get('link').split('/r')[1:]).split('/')
         filename = "/".join(filename)
         if not '.' in filename:
             return
 
-        await self.download_file(self.create_path(f'content/updates/{self.client_version}/r{rev}/{filename}'), file.get('link'))
+        download_path = f'content/updates/{self.client_version}/r{rev}/{filename}'
+        await self.download_file(self.create_path(download_path), file.get('link'))
+
         logger.info(f'Downloaded {filename} for {self.client_version}/r{rev}')
 
+        if 'text/' in file['localName']:
+            with zipfile.ZipFile(download_path, 'r') as zip_ref:
+                zip_ref.extractall(f"content/updates/{self.client_version}/tmp/")
+
+            for ffl in os.listdir(f"content/updates/{self.client_version}/tmp/text/"):
+                source_file = os.path.join(f"content/updates/{self.client_version}/tmp/text/", ffl)
+                target_file = os.path.join(f"content/updates/{self.client_version}/tmp/", ffl)
+
+                if os.path.exists(target_file):
+                    os.remove(target_file)
+                shutil.move(source_file, target_file)
+
+            file['localName'] = file['localName'].split('/')[-1]
+
+            try:
+                a = open(f"content/updates/{self.client_version}/tmp/{file['localName']}", 'rb')
+                local = MSMLocalization().loadFromFile(a)
+                enc = 'utf-8'
+            except:
+                a = open(f"content/updates/{self.client_version}/tmp/{file['localName']}", 'rb')
+                local = MSMLocalization().loadFromFile(a, "latin-1")
+                enc = 'latin-1'
+            finally:
+                a.close()
+
+            lang = file['localName'].split('.')[0]
+
+            for k, v in self.localization_patch.items():
+                local.setLocalByKey(k, v.get(lang, v.get('en', k)))
+
+            with open(f"content/updates/{self.client_version}/tmp/{file['localName']}", 'wb') as f:
+                local.saveToFile(f, enc)
+
+            self.create_path(f'content/updates/{self.client_version}/patched_text/text/')
+            with zipfile.ZipFile(f"content/updates/{self.client_version}/patched_text/text/{file['localName']}", 'w', zipfile.ZIP_DEFLATED) as zipf:
+                arcname = os.path.join('text/' + file['localName'])
+                zipf.write(f"content/updates/{self.client_version}/tmp/{file['localName']}", arcname)
+
+
+            logger.info(f'Patched localizations in {filename}')
+
     async def download_updates(self):
+        logger.info(f"Downloading updates from {self.content_url}")
         await asyncio.gather(*[asyncio.create_task(self.download_task(file)) for file in await self.get_files()])
 
 
@@ -372,8 +425,10 @@ async def main():
 
     await init_database()
     database_updater = DatabaseUpdater()
-    await database_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
-    await database_updater.test()
+    await database_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.1.4', 'f3f14a5f-f744-49c5-a81e-a2cb536f34da')
+    # await database_updater.test()
+
+    await database_updater.update_islands()
     await database_updater.update_monsters()
     await database_updater.update_genes()
     await database_updater.update_levels()

@@ -1,0 +1,5 @@
+
+špython:S3776‹"TRefactor this function to reduce its Cognitive Complexity from 38 to the 15 allowed.(Šö¢‡8æ€žÜª2J$1805b4e4-8849-4e85-89e3-54b89c6a5d83
+vpython:S3403Å"0Remove this "is" check; it will always be False.(ÈÑšñ8æ€žÜª2J$a84143ea-9f2c-446a-b854-648deeffe6f1
+ppython:S1481é"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8æ€žÜª2J$d0b89d69-b752-4135-a8b2-55ae782bd18a
+ppython:S1481ú"%Remove the unused local variable "e".(¼–¯¸ÿÿÿÿÿ8æ€žÜª2J$85285c7f-e250-4901-b8f9-cdb7cd9abf6d

@@ -175,6 +175,7 @@ class SFSServer(SFSRouter):
                     return client.kick()
 
                 if not await self.login_callback(client, username, password, auth_params):
+                    await asyncio.sleep(1)
                     return await client.kick()
 
                 client.set_arg('username', username)

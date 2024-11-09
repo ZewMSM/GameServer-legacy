@@ -1,0 +1,4 @@
+
+wpython:S1144¶"1Remove this unused class-private '__str_' method.(È„úÉ8ÚŸŽú«2J$f95ec4e6-0e1c-4269-b920-5a4c2325e15b
+Ÿpython:S4144¶"YUpdate this function so that its implementation is not identical to __repr__ on line 178.(È„úÉ8ÛŸŽú«2J$063ec54b-0db4-475c-be82-4398fbc804a2
+™python:S5890"OReplace the type hint "int" with "Optional[int]" or don't assign "None" to "id"(Ñ™ª—ÿÿÿÿÿ8ÛŸŽú«2J$413ed7ca-2b96-4f6e-a8d5-f435615c7a61

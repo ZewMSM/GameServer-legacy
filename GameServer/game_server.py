@@ -16,7 +16,6 @@ from config import GameConfig
 from database.player import Player
 from database.stuff import GameSettings
 
-
 from database.flip_board import FlipBoard, FlipLevel
 from database.gene import Gene, AttunerGene
 from database.island import Island, IslandThemeData
@@ -27,7 +26,6 @@ from database.scratch_offer import ScratchOffer
 from database.store import StoreItem, StoreGroup, StoreCurrency, StoreReplacement
 from database.structure import Structure
 from database.stuff import NucleusReward, EntityAltCosts, TitanSoulLevel, TimedEvents, GameSettings
-
 
 logger = logging.getLogger('GameServer/Main')
 
@@ -75,7 +73,8 @@ class GameServer:
 
     @staticmethod
     async def send_generic_message(sender, message: str, force_logout=False):
-        await sender.send_extension("gs_display_generic_message", SFSObject().putBool("force_logout", force_logout).putUtfString("msg", message))
+        await sender.send_extension("gs_display_generic_message",
+                                    SFSObject().putBool("force_logout", force_logout).putUtfString("msg", message))
 
     @staticmethod
     async def send_banned_message(sender, message: str):
@@ -110,6 +109,23 @@ class GameServer:
 
         if bbb_id is None:
             await GameServer.send_banned_message(client, 'INVALID_BBB_ID')
+            return False
+
+        if 'game_player' not in decrypted_token.get('rights', []):
+            await client.send_extension("gs_client_version_error", SFSObject()
+                                        .putBool("success", False)
+                                        .putUtfString("message", "UPDATE_VERSION")
+                                        .putSFSArray("urls", SFSArray()
+                                                     .addSFSObject(SFSObject()
+                                                                   .putUtfString("platform", "android")
+                                                                   .putUtfString("url", "https://t.me/+ZWJ_mcbDznZkOGQy")
+                                                                   )
+                                                     .addSFSObject(SFSObject()
+                                                                   .putUtfString("platform", "ios")
+                                                                   .putUtfString("url", "https://t.me/+ZWJ_mcbDznZkOGQy")
+                                                                   )
+                                                     )
+                                        )
             return False
 
         client.set_arg('username', username)
