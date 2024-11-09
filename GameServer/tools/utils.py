@@ -38,3 +38,10 @@ def decrypt_token(encrypted_token):
             return None
     else:
         return None
+
+def generate_bind_link(user_id):
+    hash = md5(f"S45d76F*&G9*N&FB6c5x4e^C%R:{user_id}")
+    data = f'bind:{user_id}:{hash}'
+    encoded = base64.b64encode(data.encode("utf-8")).decode('utf-8')
+
+    return f'https://t.me/zewmsm_bot?start={encoded}'

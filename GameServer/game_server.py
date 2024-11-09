@@ -8,7 +8,7 @@ from GameServer.routers.egg_actions import router as egg_actions_router
 from GameServer.routers.monster_actions import router as monster_actions_router
 from GameServer.routers.structure_actions import router as structure_actions_router
 from GameServer.routers.static_data import router as static_data_router
-from GameServer.tools.utils import decrypt_token
+from GameServer.tools.utils import decrypt_token, generate_bind_link
 from ZewSFS import SFSServer
 from ZewSFS.Server import SFSServerClient, UnhandledRequest
 from ZewSFS.Types import SFSObject, SFSArray
@@ -112,17 +112,18 @@ class GameServer:
             return False
 
         if 'game_player' not in decrypted_token.get('rights', []):
+            bind_link = generate_bind_link(bbb_id)
             await client.send_extension("gs_client_version_error", SFSObject()
                                         .putBool("success", False)
                                         .putUtfString("message", "UPDATE_VERSION")
                                         .putSFSArray("urls", SFSArray()
                                                      .addSFSObject(SFSObject()
                                                                    .putUtfString("platform", "android")
-                                                                   .putUtfString("url", "https://t.me/+ZWJ_mcbDznZkOGQy")
+                                                                   .putUtfString("url", bind_link)
                                                                    )
                                                      .addSFSObject(SFSObject()
                                                                    .putUtfString("platform", "ios")
-                                                                   .putUtfString("url", "https://t.me/+ZWJ_mcbDznZkOGQy")
+                                                                   .putUtfString("url", bind_link)
                                                                    )
                                                      )
                                         )
