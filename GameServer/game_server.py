@@ -111,11 +111,11 @@ class GameServer:
             await GameServer.send_banned_message(client, 'INVALID_BBB_ID')
             return False
 
-        if 'can_play' not in decrypted_token.get('rights', []):
+        if decrypted_token.get('can_play', False):
             bind_link = generate_bind_link(bbb_id)
             await client.send_extension("gs_client_version_error", SFSObject()
                                         .putBool("success", False)
-                                        .putUtfString("message", "UPDATE_VERSION")
+                                        .putUtfString("message", "LINK_NEEDED")
                                         .putSFSArray("urls", SFSArray()
                                                      .addSFSObject(SFSObject()
                                                                    .putUtfString("platform", "android")
