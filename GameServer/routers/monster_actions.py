@@ -311,3 +311,4 @@ async def place_on_gold_island(client: SFSServerClient, params: SFSObject):
     response.putLong('user_monster_id', parent_monster_id)
 
     return response
+
