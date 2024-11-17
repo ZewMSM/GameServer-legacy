@@ -8,6 +8,7 @@ import zipfile
 from asyncio import create_task
 
 import aiohttp
+from starlette.config import environ
 
 from GameServer.tools.MSMLocalization import MSMLocalization
 from ZewSFS.Client import SFSClient
@@ -25,7 +26,7 @@ from database.store import StoreItem, StoreGroup, StoreCurrency, StoreReplacemen
 from database.structure import Structure
 from database.stuff import NucleusReward, EntityAltCosts, TitanSoulLevel, TimedEvents, GameSettings
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG if environ.get('type', 'release') == 'debug' else logging.INFO)
 
 
 class TimedEventsTools:
