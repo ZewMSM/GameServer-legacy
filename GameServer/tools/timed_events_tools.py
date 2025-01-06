@@ -48,7 +48,7 @@ class TimedEventsTools:
 
 async def main():
     await init_database()
-    await TimedEventsTools.set_unablalible_monsters_event(5 * 24)
+    await TimedEventsTools.set_unablalible_monsters_event(360 * 24)
 
 
 if __name__ == '__main__':
