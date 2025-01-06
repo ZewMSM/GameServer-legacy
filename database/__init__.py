@@ -9,7 +9,7 @@ from database.db_classes import *
 
 logger = logging.getLogger('Database')
 engine = create_async_engine(f'postgresql+asyncpg://{environ.get("POSTGRES_USER")}:{environ.get("POSTGRES_PASSWD")}@'
-                             f'{environ.get("POSTGRES_HOST")}:{environ.get("POSTGRES_PORT")}/{environ.get("POSTGRES_NAME")}', echo=True)
+                             f'{environ.get("POSTGRES_HOST")}:{environ.get("POSTGRES_PORT")}/{environ.get("POSTGRES_NAME")}', echo=False)
 Session = async_sessionmaker(bind=engine, expire_on_commit=False)
 RedisSession = aioredis.Redis(host=environ.get("REDIS_GAME_HOST"), port=environ.get("REDIS_GAME_PORT"))
 
