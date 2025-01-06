@@ -433,7 +433,6 @@ async def main():
 
     await database_updater.update_islands()
 
-
     await database_updater.update_monsters()
     await database_updater.update_genes()
     await database_updater.update_levels()
