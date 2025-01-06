@@ -24,7 +24,10 @@ from database.store import StoreItem, StoreGroup, StoreCurrency, StoreReplacemen
 from database.structure import Structure
 from database.stuff import NucleusReward, EntityAltCosts, TitanSoulLevel, TimedEvents, GameSettings
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.DEBUG if os.environ.get('type', 'release') == 'debug' else logging.INFO,
+    format='%(levelname)s/%(name)s:\t%(message)s'
+)
 
 
 class Updater:
@@ -429,6 +432,8 @@ async def main():
     # await database_updater.test()
 
     await database_updater.update_islands()
+
+
     await database_updater.update_monsters()
     await database_updater.update_genes()
     await database_updater.update_levels()
