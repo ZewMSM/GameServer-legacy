@@ -7,4 +7,3 @@ pycryptodome
 python-multipart
 aiohttp
 greenlet
-uvloop
