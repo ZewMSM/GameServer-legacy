@@ -2,6 +2,8 @@ import asyncio
 import logging
 from os import environ
 
+import uvloop
+
 from GameServer import GameServer
 from database import init_database
 
@@ -10,6 +12,8 @@ logging.basicConfig(
     format='%(levelname)s/%(name)s:\t%(message)s'
 )
 
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 async def main():
     await init_database()

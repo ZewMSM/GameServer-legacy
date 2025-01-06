@@ -2,6 +2,8 @@ import asyncio
 import logging
 import time
 
+import uvloop
+
 from GameServer.routers.player_actions import router as player_actions_router
 from GameServer.routers.island_actions import router as island_actions_router
 from GameServer.routers.egg_actions import router as egg_actions_router
@@ -28,7 +30,6 @@ from database.structure import Structure
 from database.stuff import NucleusReward, EntityAltCosts, TitanSoulLevel, TimedEvents, GameSettings
 
 logger = logging.getLogger('GameServer/Main')
-
 
 class GameServer:
     server: 'SFSServer' = SFSServer()

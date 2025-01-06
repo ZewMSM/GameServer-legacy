@@ -26,6 +26,8 @@ from ZewSFS.Server.Router import SFSRouter
 from ZewSFS.Server.ServerClient import SFSServerClient
 from ZewSFS.Types import SFSObject
 
+import uvloop
+
 logger = logging.getLogger('ZewSFS/SFSServer')
 
 
