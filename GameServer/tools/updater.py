@@ -419,13 +419,13 @@ class ContentUpdater(Updater):
 
 async def main():
     content_updater = ContentUpdater()
-    await content_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.5.0', '58ffe1b7-1620-4534-982a-9f71bdb476fe')
+    await content_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.6.1', '193f6d49-4051-4adc-9949-fa4f4e9fd43a')
     await content_updater.download_updates()
-    return
 
     await init_database()
+
     database_updater = DatabaseUpdater()
-    await database_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.1.4', 'f3f14a5f-f744-49c5-a81e-a2cb536f34da')
+    await database_updater.init('looker_steam_1@zewsic.pro', 'looker_1', 'email', '4.6.1', '193f6d49-4051-4adc-9949-fa4f4e9fd43a')
     # await database_updater.test()
 
     await database_updater.update_islands()
