@@ -47,8 +47,6 @@ class TestClient:
                 raise RuntimeError(params.get("reason"))
             elif cmd == "gs_client_version_error":
                 raise RuntimeError("Client version is outdated.")
-            elif cmd == "gs_display_generic_message":
-                raise RuntimeError("Generic message: " + params.getUtfString("message"))
 
 
 
@@ -64,15 +62,19 @@ class TestClient:
 
 
 async def single_task(user_id: int):
+    client = TestClient()
     try:
-        client = await TestClient().init(user_id)
+        await client.init(user_id)
         await client.ask_player()
     except:
         logger.info(f'Player #{user_id}: Kicked')
 
+    await client.sfs_client.disconnect()
+
 async def main():
     while 1:
         await asyncio.gather(*[single_task(i) for i in range(500)])
+
 
 if __name__ == '__main__':
     import asyncio
