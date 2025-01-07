@@ -147,10 +147,10 @@ class SFSServer(SFSRouter):
         """
         if client.state == 'handshake':
             if request.get('c') == b'\x00' and request.get('a') == 0:
-                logger.info(f'HandshakeRequest from {client.identifier}')
-                logger.debug(request)
                 identifier = secrets.token_urlsafe(32)
                 client.identifier = identifier
+                logger.info(f'HandshakeRequest from {client.identifier}')
+                logger.debug(request)
                 client.state = 'login'
 
                 asyncio.create_task(client.send_handshake())
