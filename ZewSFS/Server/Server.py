@@ -233,7 +233,7 @@ class SFSServer(SFSRouter):
 
         try:
             while True:
-                asyncio.create_task(self._process_request(client, await client.read_request()))
+                await self._process_request(client, await client.read_request())
         except ConnectionError:
             ...
         except asyncio.IncompleteReadError:

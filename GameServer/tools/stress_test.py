@@ -57,13 +57,22 @@ class TestClient:
         resp = len((await self.sfs_client.request("db_monster", SFSObject())).get('monsters_data'))
         logger.info(f'Player #{self.user_id}: Got {resp} monsters.')
 
+    async def ask_player(self):
+        logger.info(f'Player #{self.user_id}: Requesting player...')
+        await self.sfs_client.request("gs_player", SFSObject())
+        logger.info(f'Player #{self.user_id}: Got player.')
+
 
 async def single_task(user_id: int):
-    client = await TestClient().init(user_id)
-    await client.ask_monsters()
+    try:
+        client = await TestClient().init(user_id)
+        await client.ask_player()
+    except:
+        logger.info(f'Player #{user_id}: Kicked')
 
 async def main():
-    await asyncio.gather(*[single_task(i) for i in range(100)])
+    while 1:
+        await asyncio.gather(*[single_task(i) for i in range(500)])
 
 if __name__ == '__main__':
     import asyncio

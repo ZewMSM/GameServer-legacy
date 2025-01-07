@@ -33,11 +33,9 @@ class BaseAdapter(metaclass=BaseAdapterMeta):
         await self.before_save()
 
         async with Session() as session:
-            print('searching', self.id)
             db_instance = await session.get(self._db_model, self.id)
 
             if db_instance is None:
-                print('searching failed')
                 db_instance = self._db_model()
                 db_instance.id = self.id
                 session.add(db_instance)
