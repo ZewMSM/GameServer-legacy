@@ -67,19 +67,25 @@ class BaseAdapter(metaclass=BaseAdapterMeta):
         assert Exception('Object is not exists.')
 
     @classmethod
-    async def load_one_by(cls: Type[T], query_class, query) -> T:  # match_type: ignore
-        async with Session() as session:
-            db_instance = (await session.execute(select(cls._db_model).where(query_class == query))).scalar_one_or_none()
+    async def load_one_by(cls: Type[T], query_class, query) -> T:
+        async with Session() as session:  # type: AsyncSession
+            stmt = select(cls._db_model).where(query_class == query)
+            result = await session.execute(stmt)
+            db_instance = result.scalar_one_or_none()
             if db_instance:
                 return await cls.from_db_instance(db_instance)
 
-        assert Exception('Object is not exists.')
+        raise ValueError("Object not found in load_one_by")
 
     @classmethod
-    async def load_all_by(cls: Type[T], query_class, query) -> List[T]:  # match_type: ignore
-        async with Session() as session:
-            db_instances = (await session.execute(select(cls._db_model).where(query_class == query))).scalars().all()
-            return await asyncio.gather(*[asyncio.create_task(cls.from_db_instance(db_instance)) for db_instance in db_instances])
+    async def load_all_by(cls: Type[T], query_class, query) -> List[T]:
+        async with Session() as session:  # type: AsyncSession
+            stmt = select(cls._db_model).where(query_class == query)
+            result = await session.execute(stmt)
+            db_instances = result.scalars().all()
+
+        # Можно убрать параллелизацию, если она не даёт прироста
+        return [await cls.from_db_instance(db_inst) for db_inst in db_instances]
 
     @classmethod
     async def load_all(cls: Type[T], cached=True) -> List[T]:
@@ -91,14 +97,23 @@ class BaseAdapter(metaclass=BaseAdapterMeta):
             return await asyncio.gather(*[asyncio.create_task(cls.from_db_instance(db_instance)) for db_instance in db_instances])
 
     @classmethod
-    async def from_db_instance(cls: Type[T], db_instance) -> T:
+    async def from_db_instance(cls: Type[T], db_instance: Base) -> T:
         instance = cls()
         for field in cls._db_model.__table__.columns.keys():
             setattr(instance, field, getattr(db_instance, field))
+
         await instance.on_load_complete()
 
+        # Кэшируем синхронно для согласованности (можете сделать и через create_task)
         if cls._enable_caching:
-            asyncio.create_task(RedisSession.hset(f"{cls._db_model.__tablename__}_db", str(instance.id), pickle.dumps(instance.to_dict())))
+            try:
+                await RedisSession.hset(
+                    f"{cls._db_model.__tablename__}_db",
+                    str(instance.id),
+                    pickle.dumps(instance.to_dict())
+                )
+            except:
+                pass
 
         return instance
 
@@ -139,16 +154,19 @@ class BaseAdapter(metaclass=BaseAdapterMeta):
     @classmethod
     async def from_sfs_object(cls: Type[T], obj: SFSObject) -> T:
         instance = cls()
-        for field, value in obj.get_value().items():
-            value: SFSObject
-            if type(value) in (SFSObject, SFSArray):
-                value: str = value.to_json()
+        values = obj.get_value()
+        for field, val_container in values.items():
+            # Если внутри ещё один SFSObject/SFSArray
+            if isinstance(val_container, (SFSObject, SFSArray)):
+                val = val_container.to_json()
             else:
-                value: Any = value.get_value()
+                val = val_container.get_value()
+
             if field == cls._game_id_key:
-                setattr(instance, 'id', value)
+                setattr(instance, 'id', val)
             else:
-                setattr(instance, field, value)
+                setattr(instance, field, val)
+
         await instance.on_sfs_load_complete()
         await instance.on_load_complete()
         return instance
