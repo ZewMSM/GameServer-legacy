@@ -1,6 +1,9 @@
 import asyncio
 import logging
+import random
 import time
+
+from aiohttp.web_routedef import static
 
 from GameServer.routers.player_actions import router as player_actions_router
 from GameServer.routers.island_actions import router as island_actions_router
@@ -14,6 +17,7 @@ from ZewSFS.Server import SFSServerClient, UnhandledRequest
 from ZewSFS.Types import SFSObject, SFSArray
 from ZewSFS.Utils import compile_packet
 from config import GameConfig
+from database import RedisSession
 from database.player import Player
 from database.stuff import GameSettings
 
@@ -29,6 +33,9 @@ from database.structure import Structure
 from database.stuff import NucleusReward, EntityAltCosts, TitanSoulLevel, TimedEvents, GameSettings
 
 logger = logging.getLogger('GameServer/Main')
+
+server_id = random.randint(100000, 9999999)
+current_online = 0
 
 
 class GameServer:
@@ -92,6 +99,27 @@ class GameServer:
         client.player = player
 
     @staticmethod
+    async def update_online_task():
+        global current_online
+        while 1:
+            await RedisSession.set(f"online:{server_id}", str(len(GameServer.server.clients)), ex=10)
+
+            total_online = 0
+            cursor = 0
+            while True:
+                cursor, keys = await RedisSession.scan(cursor=cursor, match="online:*", count=100)
+                for key in keys:
+                    online_count = await RedisSession.get(key)
+                    if online_count:
+                        total_online += int(online_count)
+
+                if cursor == 0:
+                    break
+
+            current_online = total_online
+            await asyncio.sleep(7)
+
+    @staticmethod
     async def send_generic_message(sender, message: str, force_logout=False):
         await sender.send_extension("gs_display_generic_message",
                                     SFSObject().putBool("force_logout", force_logout).putUtfString("msg", message))
@@ -109,6 +137,8 @@ class GameServer:
 
     @staticmethod
     async def login_callback(client: 'SFSServerClient', username, password, auth_params: SFSObject):
+
+
         token: str = auth_params.get("token")
         access_key = auth_params.get("access_key")
         client_os = auth_params.get("client_os")
@@ -168,7 +198,7 @@ class GameServer:
         asyncio.create_task(GameServer.load_player_object(client))
 
         await client.send_extension('game_settings', SFSObject().putSFSArray('user_game_settings', game_settings))
-        await GameServer.send_generic_message(client, f'Welcome to ZewMSM!\n\nServer online is: {len(GameServer.server.clients)}!')
+        await GameServer.send_generic_message(client, f'Welcome to ZewMSM!\n\nServer online is: {current_online}!')
         await client.send_extension('gs_initialized', SFSObject().putLong('bbb_id', bbb_id))
         return True
 
@@ -187,4 +217,5 @@ class GameServer:
         GameServer.server.include_router(monster_actions_router)
 
         await GameServer.update_cached_databases()
+        asyncio.create_task(GameServer.update_online_task())
         await GameServer.server.serve_forever()

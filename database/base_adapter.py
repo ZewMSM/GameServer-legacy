@@ -51,7 +51,7 @@ class BaseAdapter(metaclass=BaseAdapterMeta):
             await session.commit()
 
         if self._enable_caching:
-            asyncio.create_task(RedisSession.hset(f"{self._db_model.__tablename__}_db", str(self.id), pickle.dumps(self.to_dict())))
+            await RedisSession.hset(f"{self._db_model.__tablename__}_db", str(self.id), pickle.dumps(self.to_dict()))
 
     @classmethod
     async def load_by_id(cls: Type[T], id: int) -> T:  # match_type: ignore
