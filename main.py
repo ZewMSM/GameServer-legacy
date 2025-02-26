@@ -12,6 +12,7 @@ logging.basicConfig(
     format='%(levelname)s/%(name)s:\t%(message)s'
 )
 
+
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 async def main():
