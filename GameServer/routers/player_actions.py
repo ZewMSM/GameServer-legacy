@@ -8,29 +8,42 @@ router = SFSRouter()
 
 @router.on_request('gs_player')
 async def send_player_data(client: SFSServerClient, request: SFSObject):
-    for i in range(20):
+    for i in range(15):
         if client is not None:
 
             if i == 3:
                 await client.send_extension("gs_display_generic_message",
                                             SFSObject().putBool("force_logout", False)
-                                            .putUtfString("msg", "WAIT_PLEASE_HEAVY_LOAD_ON_SERVER_MESSAGE"))
+                                            .putUtfString("msg", "PLEASE_WAIT_MESSAGE"))
             elif i == 10:
                 await client.send_extension("gs_display_generic_message",
                                             SFSObject().putBool("force_logout", False)
-                                            .putUtfString("msg", "EXTREMELY_HEAVY_LOAD_ON_SERVER_MESSAGE"))
+                                            .putUtfString("msg", "PLEASE_WAIT_MORE_MESSAGE"))
             if client.player is None:
                 await asyncio.sleep(1)
+            elif client.player is False:
+                await client.send_extension("gs_player_banned",
+                                            SFSObject().putUtfString("reason",
+                                                                     "Кажется, вы натворили ХУЙНИ и теперь ваш аккаунт НАХУЙ СЛОМАЛСЯ.\nОчистите данные приложения и попробуйте еще раз."))
+
+                await client.kick()
+                return 'Error'
             else:
-                pdata =  SFSObject().putSFSObject('player_object', await client.player.to_sfs_object())
-                print(pdata.tokenize())
+                try:
+                    pdata =  SFSObject().putSFSObject('player_object', await client.player.to_sfs_object())
+                except:
+                    await client.send_extension("gs_player_banned",
+                                                SFSObject().putUtfString("reason",
+                                                                         "Кажется, вы натворили ХУЙНИ и теперь ваш аккаунт НАХУЙ СЛОМАЛСЯ.\nОчистите данные приложения и попробуйте еще раз."))
+
+                    await client.kick()
+                    return 'Error'
                 return pdata
         else:
             return None
 
-    await client.send_extension("gs_display_generic_message",
-                                SFSObject().putBool("force_logout", False)
-                                .putUtfString("msg", "SERVER_PIZDA_MESSAGE"))
+    await client.send_extension("gs_player_banned",
+                                SFSObject().putUtfString("reason", "Серверам ПИЗДА - спасайся кто может."))
 
     await client.kick()
     return 'Error'

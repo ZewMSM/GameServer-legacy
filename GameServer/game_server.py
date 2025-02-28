@@ -87,7 +87,12 @@ class GameServer:
     @staticmethod
     async def load_player_object(client: SFSServerClient):
         bbb_id = client.get_arg('bbb_id')
-        player = await Player.load_by_id(bbb_id)
+        try:
+            player = await Player.load_by_id(bbb_id)
+        except:
+            client.set_arg('player', False)
+            client.player = False
+            return False
         if player is None:
             player = Player()
             player.id = bbb_id
