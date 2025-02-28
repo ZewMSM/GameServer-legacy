@@ -2,6 +2,7 @@ import asyncio
 import io
 import logging
 from asyncio import StreamReader, StreamWriter
+from datetime import datetime
 
 from ZewSFS.Types import SFSObject
 from ZewSFS.Utils import compile_packet
@@ -33,6 +34,7 @@ class SFSServerClient:
         self.state = 'handshake'
         self.args = {}
         self.player: 'Player' = None
+        self.last_handled_request = datetime.now()
 
         self.server.add_client(self)
         asyncio.create_task(self.on_created())

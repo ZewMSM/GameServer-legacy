@@ -20,7 +20,10 @@ import secrets
 import traceback
 from asyncio import StreamWriter, StreamReader
 from collections.abc import Awaitable, Callable, Coroutine
+from datetime import datetime
 from typing import Any
+
+from asyncpg.pgproto.pgproto import timedelta
 
 from ZewSFS.Server.Router import SFSRouter
 from ZewSFS.Server.ServerClient import SFSServerClient
@@ -75,10 +78,11 @@ class SFSServer(SFSRouter):
     login_callback: Callable[['SFSServerClient', str, str, 'SFSObject'], Awaitable[None]] = empty_callback
     error_callback: Callable[['SFSServerClient', Exception, str], Awaitable[None]] = empty_callback
 
-    def __init__(self, host: str = '0.0.0.0', port: int = 9933, zone_name: str | None = None):
+    def __init__(self, host: str = '0.0.0.0', port: int = 9933, zone_name: str | None = None, alive_timeout=60):
         self.host = host
         self.port = port
         self.zone_name = zone_name
+        self.alive_timeout = alive_timeout
 
     def get_client_by_address(self, address: str):
         """
@@ -198,6 +202,7 @@ class SFSServer(SFSRouter):
 
                     handler = self.request_handlers.get(cmd)
                     if handler is not None:
+                        client.last_handled_request = datetime.now()
                         resp = await handler(client, params)
                         if type(resp) is str:
                             await client.send_extension(cmd, SFSObject(resp).putBool('success', False).putUtfString(
@@ -245,10 +250,18 @@ class SFSServer(SFSRouter):
         logger.info(f'Disconnected from {addr}')
         asyncio.create_task(client.kick())
 
+    async def kick_inactives_task(self):
+        for client in self.clients:
+            if datetime.now() - client.last_handled_request > timedelta(seconds=self.alive_timeout):
+                await client.kick()
+        await asyncio.sleep(15)
+
     async def serve_forever(self):
         """
         Starts the server and listens for incoming connections.
         """
+        asyncio.create_task(self.kick_inactives_task())
+
         server = await asyncio.start_server(self._handle_connection, self.host, self.port)
         async with server:
             logger.info(f'Serving on {self.host}:{self.port}')
